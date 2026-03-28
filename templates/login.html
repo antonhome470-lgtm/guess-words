@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon">🎮</div>
+            <h1>Угадай Слова</h1>
+            <p>Войдите, чтобы продолжить игру</p>
+        </div>
+
+        <form method="POST" class="auth-form">
+            <div class="form-group">
+                <label for="username">Имя пользователя</label>
+                <input type="text" id="username" name="username" required
+                       placeholder="Введите имя..." autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" required
+                       placeholder="Введите пароль..." autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">Войти</button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрируйтесь</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
