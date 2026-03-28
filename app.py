@@ -171,57 +171,58 @@ def game():
                            total_score=current_user.total_score)
 
 
-@app.route('/api/guess', methods=['POST'])
-@login_required
-def guess_word():
-    data = request.get_json()
-    guess = data.get('word', '').strip().upper()
-    level_num = current_user.current_level
+    @app.route('/api/guess', methods=['POST'])
+    @login_required
+    def guess_word():
+        data = request.get_json()
+        if not data:
+            return jsonify({'status': 'error', 'message': 'Нет данных'})
 
-    if current_user.game_finished:
-        return jsonify({'status': 'finished', 'message': 'Игра уже завершена!'})
+        guess = data.get('word', '').strip().upper()
+        level_num = current_user.current_level
 
-    level_data = get_level_data(level_num)
-    if not level_data:
-        return jsonify({'status': 'error', 'message': 'Уровень не найден'})
+        if current_user.game_finished:
+            return jsonify({'status': 'finished', 'message': 'Игра завершена!'})
 
-    guessed_words = current_user.get_guessed_words(level_num)
+        level_data = get_level_data(level_num)
+        if not level_data:
+            return jsonify({'status': 'error', 'message': 'Уровень не найден'})
 
-    for w in level_data['words']:
-        if w['word'] == guess:
-            if guess in guessed_words:
+        guessed_words = current_user.get_guessed_words(level_num)
+
+        # Ищем слово И его индекс
+        for index, w in enumerate(level_data['words']):
+            if w['word'] == guess:
+                if guess in guessed_words:
+                    return jsonify({
+                        'status': 'already',
+                        'message': 'Это слово уже угадано!'
+                    })
+
+                points = w['difficulty']
+                current_user.add_guessed_word(level_num, guess, points)
+                db.session.commit()
+
+                new_guessed = current_user.get_guessed_words(level_num)
+                new_level_score = current_user.get_level_score(level_num)
+
                 return jsonify({
-                    'status': 'already',
-                    'message': 'Это слово уже угадано!'
+                    'status': 'correct',
+                    'message': f'Верно! +{points} очков',
+                    'word': guess,
+                    'word_index': index,      # <-- ДОБАВЛЕНО
+                    'points': points,
+                    'guessed_count': len(new_guessed),
+                    'level_score': new_level_score,
+                    'total_score': current_user.total_score,
+                    'can_advance': len(new_guessed) >= 4,
+                    'all_guessed': len(new_guessed) >= 5
                 })
 
-            points = w['difficulty']
-            current_user.add_guessed_word(level_num, guess, points)
-            db.session.commit()
-
-            new_guessed = current_user.get_guessed_words(level_num)
-            new_level_score = current_user.get_level_score(level_num)
-
-            can_advance = len(new_guessed) >= 4
-            all_guessed = len(new_guessed) >= 5
-
-            return jsonify({
-                'status': 'correct',
-                'message': f'Верно! +{points} очков',
-                'word': guess,
-                'points': points,
-                'guessed_count': len(new_guessed),
-                'level_score': new_level_score,
-                'total_score': current_user.total_score,
-                'can_advance': can_advance,
-                'all_guessed': all_guessed
-            })
-
-    return jsonify({
-        'status': 'wrong',
-        'message': 'Неправильно! Попробуйте ещё раз'
-    })
-
+        return jsonify({
+            'status': 'wrong',
+            'message': 'Неправильно! Попробуйте ещё раз'
+        })
 
 @app.route('/api/next-level', methods=['POST'])
 @login_required
