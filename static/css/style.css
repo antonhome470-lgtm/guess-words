@@ -785,3 +785,148 @@ body {
         font-size: 0.9rem;
     }
 }
+
+/* ==================== SCORING RULES ==================== */
+.scoring-rules {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 12px;
+    background: rgba(108, 92, 231, 0.1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+}
+
+.rule {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    padding: 4px 10px;
+    background: var(--bg-card);
+    border-radius: 8px;
+}
+
+.rule strong {
+    color: var(--secondary);
+}
+
+/* ==================== HINT COST ==================== */
+.hint-cost {
+    font-size: 0.7rem;
+    color: var(--danger);
+    display: block;
+    margin-top: 2px;
+}
+
+.hint-used-badge {
+    font-size: 0.8rem;
+    color: var(--warning);
+    opacity: 0.7;
+}
+
+.hint-penalty {
+    font-size: 0.9rem;
+    margin-top: 10px;
+    font-weight: 600;
+}
+
+/* ==================== STREAK ==================== */
+.streak-display {
+    color: #e17055;
+    font-weight: 700;
+    animation: pulse 1.5s ease infinite;
+}
+
+/* ==================== BONUS SECTION ==================== */
+.bonus-section {
+    background: var(--bg-card);
+    border: 2px solid rgba(253, 203, 110, 0.3);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.bonus-section h3 {
+    color: var(--warning);
+    margin-bottom: 5px;
+}
+
+.bonus-info {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.bonus-hint {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+}
+
+.bonus-words-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    min-height: 30px;
+}
+
+.bonus-word-tag {
+    background: rgba(253, 203, 110, 0.15);
+    border: 1px solid var(--warning);
+    color: var(--warning);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.bonus-word-new {
+    animation: bounceIn 0.5s ease;
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.bonus-counter {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.bonus-counter span {
+    color: var(--warning);
+    font-weight: 800;
+}
+
+/* ==================== MESSAGE BONUS ==================== */
+.message-bonus {
+    color: var(--warning);
+    animation: bounceIn 0.5s ease;
+}
+
+/* ==================== FINISH STATS GRID ==================== */
+.finish-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 768px) {
+    .scoring-rules {
+        gap: 5px;
+    }
+    .rule {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+    }
+    .finish-stats {
+        grid-template-columns: 1fr;
+    }
+}
