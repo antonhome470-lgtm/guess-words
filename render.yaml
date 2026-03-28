@@ -1,0 +1,22 @@
+databases:
+  - name: guess-words-db
+    plan: free
+    databaseName: guesswordsdb
+    user: guesswordsuser
+
+services:
+  - type: web
+    name: guess-words-game
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: guess-words-db
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: 3.11.0
