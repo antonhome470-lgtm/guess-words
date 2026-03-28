@@ -10,7 +10,6 @@ app = Flask(__name__)
 # Конфигурация
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'super-secret-key-change-me')
 database_url = os.environ.get('DATABASE_URL', 'sqlite:///game.db')
-# Render использует postgres://, SQLAlchemy требует postgresql://
 if database_url.startswith('postgres://'):
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
@@ -29,9 +28,30 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-# Создание таблиц при первом запуске
-with app.app_context():
-    db.create_all()
+# ======== БЕЗОПАСНОЕ создание таблиц ========
+def init_db():
+    """Создаёт таблицы только если их нет"""
+    with app.app_context():
+        try:
+            # Проверяем, существует ли таблица
+            from sqlalchemy import inspect
+            inspector = inspect(db.engine)
+            existing_tables = inspector.get_table_names()
+
+            if 'users' not in existing_tables:
+                db.create_all()
+                print("✅ Таблицы созданы")
+            else:
+                print("ℹ️ Таблицы уже существуют, пропускаем создание")
+        except Exception as e:
+            print(f"⚠️ Ошибка при инициализации БД: {e}")
+            # Пробуем альтернативный способ
+            try:
+                db.create_all()
+            except Exception:
+                pass
+
+init_db()
 
 
 # ==================== МАРШРУТЫ ====================
@@ -131,7 +151,6 @@ def game():
     guessed_words = current_user.get_guessed_words(level_num)
     level_score = current_user.get_level_score(level_num)
 
-    # Подготовим данные слов для отображения (без самих ответов!)
     words_info = []
     for w in level_data['words']:
         words_info.append({
@@ -155,7 +174,6 @@ def game():
 @app.route('/api/guess', methods=['POST'])
 @login_required
 def guess_word():
-    """API для проверки слова"""
     data = request.get_json()
     guess = data.get('word', '').strip().upper()
     level_num = current_user.current_level
@@ -169,7 +187,6 @@ def guess_word():
 
     guessed_words = current_user.get_guessed_words(level_num)
 
-    # Проверяем, угадано ли слово
     for w in level_data['words']:
         if w['word'] == guess:
             if guess in guessed_words:
@@ -178,7 +195,6 @@ def guess_word():
                     'message': 'Это слово уже угадано!'
                 })
 
-            # Слово угадано!
             points = w['difficulty']
             current_user.add_guessed_word(level_num, guess, points)
             db.session.commit()
@@ -186,7 +202,6 @@ def guess_word():
             new_guessed = current_user.get_guessed_words(level_num)
             new_level_score = current_user.get_level_score(level_num)
 
-            # Проверяем, можно ли перейти на следующий уровень (4 из 5)
             can_advance = len(new_guessed) >= 4
             all_guessed = len(new_guessed) >= 5
 
@@ -211,7 +226,6 @@ def guess_word():
 @app.route('/api/next-level', methods=['POST'])
 @login_required
 def next_level():
-    """Переход на следующий уровень"""
     level_num = current_user.current_level
     guessed_words = current_user.get_guessed_words(level_num)
     total_levels = get_total_levels()
@@ -242,7 +256,6 @@ def next_level():
 @app.route('/api/hint', methods=['POST'])
 @login_required
 def get_hint():
-    """Получить подсказку"""
     data = request.get_json()
     word_index = data.get('index', 0)
     level_num = current_user.current_level
@@ -269,7 +282,6 @@ def finish():
 @app.route('/reset-game', methods=['POST'])
 @login_required
 def reset_game():
-    """Сброс игры"""
     current_user.current_level = 1
     current_user.total_score = 0
     current_user.game_finished = False
