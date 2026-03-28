@@ -6,7 +6,7 @@
         <div class="fireworks">🎆🎇🎆</div>
         <div class="trophy">🏆</div>
         <h1>Поздравляем, {{ username }}!</h1>
-        <p class="finish-subtitle">Вы прошли все уровни игры "Угадай Слова"!</p>
+        <p class="finish-subtitle">Вы прошли все уровни!</p>
 
         <div class="final-score">
             <div class="score-number">{{ total_score }}</div>
@@ -15,14 +15,24 @@
 
         <div class="finish-stats">
             <div class="stat">
-                <span class="stat-icon">🎯</span>
-                <span class="stat-value">10</span>
-                <span class="stat-label">Уровней пройдено</span>
+                <span class="stat-icon">📝</span>
+                <span class="stat-value">{{ total_words }}</span>
+                <span class="stat-label">Слов угадано</span>
             </div>
             <div class="stat">
-                <span class="stat-icon">📝</span>
-                <span class="stat-value">50</span>
-                <span class="stat-label">Слов всего</span>
+                <span class="stat-icon">🎁</span>
+                <span class="stat-value">{{ total_bonus }}</span>
+                <span class="stat-label">Бонусных слов</span>
+            </div>
+            <div class="stat">
+                <span class="stat-icon">💡</span>
+                <span class="stat-value">{{ total_hints }}</span>
+                <span class="stat-label">Подсказок</span>
+            </div>
+            <div class="stat">
+                <span class="stat-icon">🔥</span>
+                <span class="stat-value">{{ best_streak }}</span>
+                <span class="stat-label">Лучшая серия</span>
             </div>
         </div>
 
