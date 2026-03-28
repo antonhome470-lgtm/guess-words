@@ -32,8 +32,44 @@ def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 
+# ============ БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ БД ============
 with app.app_context():
-    db.create_all()
+    try:
+        from sqlalchemy import inspect, text
+
+        inspector = inspect(db.engine)
+        existing_tables = inspector.get_table_names()
+
+        if 'users' not in existing_tables:
+            # Таблицы нет — создаём
+            db.create_all()
+            print("✅ Таблицы созданы с нуля")
+        else:
+            # Таблица есть — проверяем новые колонки
+            existing_columns = [col['name'] for col in inspector.get_columns('users')]
+            print(f"📋 Существующие колонки: {existing_columns}")
+
+            new_columns = {
+                'total_words_guessed': 'INTEGER DEFAULT 0',
+                'total_bonus_words': 'INTEGER DEFAULT 0',
+                'total_hints_used': 'INTEGER DEFAULT 0',
+                'best_streak': 'INTEGER DEFAULT 0'
+            }
+
+            for col_name, col_type in new_columns.items():
+                if col_name not in existing_columns:
+                    try:
+                        db.session.execute(text(f'ALTER TABLE users ADD COLUMN {col_name} {col_type}'))
+                        print(f"  ✅ Добавлена колонка: {col_name}")
+                    except Exception as e:
+                        print(f"  ⚠️ Колонка {col_name}: {e}")
+
+            db.session.commit()
+            print("✅ Таблица обновлена")
+
+    except Exception as e:
+        print(f"❌ Ошибка инициализации БД: {e}")
+        db.session.rollback()
 
 
 # ==================== СТРАНИЦЫ ====================
@@ -217,7 +253,7 @@ def guess_word():
     bonus_words = current_user.get_bonus_words(level_num)
     hints_used = current_user.get_hints_used(level_num)
 
-    # 1. Проверяем основные слова
+    # 1. Основные слова
     for index, w in enumerate(level_data['words']):
         if w['word'] == guess:
             if guess in guessed_words:
@@ -234,7 +270,6 @@ def guess_word():
             new_guessed = current_user.get_guessed_words(level_num)
             new_level_score = current_user.get_level_score(level_num)
 
-            # Формируем сообщение
             msg = f'✅ Верно! +{points}'
             if used_hint:
                 msg += ' (с подсказкой)'
@@ -261,7 +296,7 @@ def guess_word():
                 'all_guessed': len(new_guessed) >= 5
             })
 
-    # 2. Проверяем бонусные слова
+    # 2. Бонусные слова
     bonus_list = level_data.get('bonus_words', [])
     if guess in bonus_list:
         if guess in bonus_words:
@@ -307,7 +342,6 @@ def get_hint():
     if not level_data or word_index >= len(level_data['words']):
         return jsonify({'status': 'error'})
 
-    # Штраф за подсказку
     penalty = current_user.use_hint(level_num, word_index)
     db.session.commit()
 
