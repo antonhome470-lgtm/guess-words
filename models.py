@@ -15,7 +15,6 @@ class User(UserMixin, db.Model):
     current_level = db.Column(db.Integer, default=1)
     total_score = db.Column(db.Integer, default=0)
     game_finished = db.Column(db.Boolean, default=False)
-    # Хранит JSON: {"1": {"guessed": ["КОТ","СЛОН"], "score": 5}, ...}
     level_progress = db.Column(db.Text, default='{}')
 
     def set_password(self, password):
@@ -46,20 +45,10 @@ class User(UserMixin, db.Model):
     def add_guessed_word(self, level_num, word, points):
         progress = self.get_level_progress()
         level_key = str(level_num)
-
         if level_key not in progress:
             progress[level_key] = {'guessed': [], 'score': 0}
-
         if word not in progress[level_key]['guessed']:
             progress[level_key]['guessed'].append(word)
             progress[level_key]['score'] += points
             self.total_score += points
-
         self.set_level_progress(progress)
-
-    def recalculate_total_score(self):
-        progress = self.get_level_progress()
-        total = 0
-        for level_key, data in progress.items():
-            total += data.get('score', 0)
-        self.total_score = total
