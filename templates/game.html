@@ -1,1 +1,103 @@
+{% extends "base.html" %}
 
+{% block content %}
+<div class="game-container">
+    <!-- Информация об уровне -->
+    <div class="level-header">
+        <div class="level-badge">Уровень {{ level_num }} / {{ total_levels }}</div>
+        <div class="level-progress-bar">
+            <div class="level-progress-fill" style="width: {{ (level_num / total_levels * 100)|int }}%"></div>
+        </div>
+        <div class="score-display">
+            <span class="level-score">Уровень: ⭐ {{ level_score }}</span>
+            <span class="total-score-game">Всего: 🏆 {{ total_score }}</span>
+        </div>
+    </div>
+
+    <!-- Хаотичные буквы -->
+    <div class="letters-cloud" id="lettersCloud">
+        {% for letter in jumbled_letters.split() %}
+            <span class="letter-bubble">{{ letter }}</span>
+        {% endfor %}
+    </div>
+
+    <!-- Слова для угадывания -->
+    <div class="words-grid">
+        {% for word in words_info %}
+        <div class="word-card {% if word.guessed %}word-guessed{% endif %}" data-index="{{ loop.index0 }}">
+            <div class="word-header">
+                <span class="word-difficulty">
+                    {% for i in range(word.difficulty) %}⭐{% endfor %}
+                </span>
+                <span class="word-length">{{ word.length }} букв</span>
+            </div>
+
+            <div class="word-display">
+                {% if word.guessed %}
+                    <span class="word-revealed">{{ word.word }}</span>
+                {% else %}
+                    <span class="word-hidden">
+                        {% for i in range(word.length) %}
+                            <span class="letter-slot">?</span>
+                        {% endfor %}
+                    </span>
+                {% endif %}
+            </div>
+
+            {% if not word.guessed %}
+            <div class="word-actions">
+                <button class="btn-hint" onclick="showHint({{ loop.index0 }})" title="Подсказка">
+                    ❓
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Подсказка (модальное окно) -->
+    <div class="hint-modal" id="hintModal" style="display: none;">
+        <div class="hint-content">
+            <span class="hint-close" onclick="closeHint()">×</span>
+            <div class="hint-icon">💡</div>
+            <h3>Подсказка</h3>
+            <p id="hintText"></p>
+        </div>
+    </div>
+
+    <!-- Поле ввода -->
+    <div class="input-section">
+        <div class="input-wrapper">
+            <input type="text" id="guessInput" placeholder="Введите слово..."
+                   autocomplete="off" autocapitalize="characters">
+            <button class="btn btn-guess" id="guessBtn" onclick="submitGuess()">
+                Проверить
+            </button>
+        </div>
+        <div class="message-area" id="messageArea"></div>
+    </div>
+
+    <!-- Кнопка перехода -->
+    <div class="advance-section" id="advanceSection" style="display: none;">
+        <button class="btn btn-advance" onclick="nextLevel()">
+            🚀 Следующий уровень
+        </button>
+    </div>
+
+    <!-- Угадано -->
+    <div class="guessed-counter">
+        Угадано: <span id="guessedCount">{{ guessed_count }}</span> / 5
+        <span class="min-required">(минимум 4 для перехода)</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/game.js') }}"></script>
+<script>
+    // Проверяем, можно ли переходить
+    {% if guessed_count >= 4 %}
+        document.getElementById('advanceSection').style.display = 'flex';
+    {% endif %}
+</script>
+{% endblock %}
