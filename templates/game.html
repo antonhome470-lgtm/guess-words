@@ -2,7 +2,6 @@
 
 {% block content %}
 <div class="game-container">
-    <!-- Уровень -->
     <div class="level-header">
         <div class="level-badge">Уровень {{ level_num }} / {{ total_levels }}</div>
         <div class="level-progress-bar">
@@ -19,14 +18,14 @@
         </div>
     </div>
 
-    <!-- Правила подсчёта -->
+    <!-- Правила -->
     <div class="scoring-rules">
         <div class="rule">✅ Без подсказки: <strong>+3</strong></div>
         <div class="rule">💡 С подсказкой: <strong>+1</strong></div>
-        <div class="rule">❓ Открыть подсказку: <strong>-1</strong></div>
-        <div class="rule">🎁 Бонусное слово: <strong>+2</strong></div>
+        <div class="rule rule-danger">❓ Подсказка: <strong>-{{ hint_cost }}</strong></div>
+        <div class="rule">🎁 Бонус слово: <strong>+2</strong></div>
         <div class="rule">🔥 Серия 4+: <strong>+3</strong></div>
-        <div class="rule">⭐ Все 5 слов: <strong>+5</strong></div>
+        <div class="rule">⭐ Все 5: <strong>+5</strong></div>
     </div>
 
     <!-- Буквы -->
@@ -36,7 +35,7 @@
         {% endfor %}
     </div>
 
-    <!-- Карточки слов -->
+    <!-- Слова -->
     <div class="words-grid">
         {% for word in words_info %}
         <div class="word-card {% if word.guessed %}word-guessed{% endif %}" data-index="{{ loop.index0 }}">
@@ -64,8 +63,8 @@
                 {% if word.hint_used %}
                     <span class="hint-used-badge">💡 Подсказка открыта</span>
                 {% else %}
-                    <button class="btn-hint" onclick="showHint({{ loop.index0 }})" title="Подсказка (-1 очко)">
-                        ❓ <span class="hint-cost">-1</span>
+                    <button class="btn-hint" onclick="showHint({{ loop.index0 }})" title="Подсказка (-{{ hint_cost }})">
+                        ❓ <span class="hint-cost">-{{ hint_cost }}</span>
                     </button>
                 {% endif %}
             </div>
@@ -74,7 +73,7 @@
         {% endfor %}
     </div>
 
-    <!-- Бонусные слова -->
+    <!-- Бонусы -->
     {% if has_bonus_words %}
     <div class="bonus-section">
         <h3>🎁 Бонусные слова <span class="bonus-info">(+2 за каждое)</span></h3>
@@ -84,11 +83,11 @@
                 <span class="bonus-word-tag">{{ bw }}</span>
             {% endfor %}
         </div>
-        <div class="bonus-counter">Найдено бонусных: <span id="bonusCount">{{ bonus_count }}</span></div>
+        <div class="bonus-counter">Найдено: <span id="bonusCount">{{ bonus_count }}</span></div>
     </div>
     {% endif %}
 
-    <!-- Подсказка модал -->
+    <!-- Модал подсказки -->
     <div class="hint-modal" id="hintModal" style="display: none;">
         <div class="hint-content">
             <span class="hint-close" onclick="closeHint()">×</span>
@@ -111,7 +110,6 @@
         <div class="message-area" id="messageArea"></div>
     </div>
 
-    <!-- Переход -->
     <div class="advance-section" id="advanceSection" style="display: none;">
         <button class="btn btn-advance" onclick="nextLevel()">
             🚀 Следующий уровень
