@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import db, User
-from game_data import get_level_data, get_total_levels
+from game_data import get_level_data, get_hint_cost, get_total_levels
 
 app = Flask(__name__)
 
@@ -32,43 +32,35 @@ def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 
-# ============ БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ БД ============
+# Безопасная инициализация БД
 with app.app_context():
     try:
         from sqlalchemy import inspect, text
-
         inspector = inspect(db.engine)
         existing_tables = inspector.get_table_names()
 
         if 'users' not in existing_tables:
-            # Таблицы нет — создаём
             db.create_all()
-            print("✅ Таблицы созданы с нуля")
+            print("✅ Таблицы созданы")
         else:
-            # Таблица есть — проверяем новые колонки
             existing_columns = [col['name'] for col in inspector.get_columns('users')]
-            print(f"📋 Существующие колонки: {existing_columns}")
-
             new_columns = {
                 'total_words_guessed': 'INTEGER DEFAULT 0',
                 'total_bonus_words': 'INTEGER DEFAULT 0',
                 'total_hints_used': 'INTEGER DEFAULT 0',
                 'best_streak': 'INTEGER DEFAULT 0'
             }
-
             for col_name, col_type in new_columns.items():
                 if col_name not in existing_columns:
                     try:
                         db.session.execute(text(f'ALTER TABLE users ADD COLUMN {col_name} {col_type}'))
-                        print(f"  ✅ Добавлена колонка: {col_name}")
-                    except Exception as e:
-                        print(f"  ⚠️ Колонка {col_name}: {e}")
-
+                        print(f"  ✅ Добавлена: {col_name}")
+                    except Exception:
+                        pass
             db.session.commit()
-            print("✅ Таблица обновлена")
-
+            print("✅ БД готова")
     except Exception as e:
-        print(f"❌ Ошибка инициализации БД: {e}")
+        print(f"⚠️ Ошибка БД: {e}")
         db.session.rollback()
 
 
@@ -170,6 +162,7 @@ def game():
     hints_used = current_user.get_hints_used(level_num)
     level_score = current_user.get_level_score(level_num)
     streak = current_user.get_streak(level_num)
+    hint_cost = level_data.get('hint_cost', 1)
 
     words_info = []
     for idx, w in enumerate(level_data['words']):
@@ -182,7 +175,7 @@ def game():
             'hint_used': idx in hints_used
         })
 
-    has_bonus_words = 'bonus_words' in level_data and len(level_data['bonus_words']) > 0
+    has_bonus_words = len(level_data.get('bonus_words', [])) > 0
 
     return render_template('game.html',
                            level_num=level_num,
@@ -195,7 +188,8 @@ def game():
                            level_score=level_score,
                            total_score=current_user.total_score,
                            streak=streak,
-                           has_bonus_words=has_bonus_words)
+                           has_bonus_words=has_bonus_words,
+                           hint_cost=hint_cost)
 
 
 @app.route('/finish')
@@ -257,10 +251,7 @@ def guess_word():
     for index, w in enumerate(level_data['words']):
         if w['word'] == guess:
             if guess in guessed_words:
-                return jsonify({
-                    'status': 'already',
-                    'message': 'Это слово уже угадано!'
-                })
+                return jsonify({'status': 'already', 'message': 'Это слово уже угадано!'})
 
             used_hint = index in hints_used
             result = current_user.add_guessed_word(level_num, guess, used_hint)
@@ -276,9 +267,9 @@ def guess_word():
             else:
                 msg += ' (без подсказки!)'
             if streak_bonus > 0:
-                msg += f' 🔥 Серия {streak}! +{streak_bonus} бонус'
+                msg += f' 🔥 Серия {streak}! +{streak_bonus}'
             if all_five_bonus > 0:
-                msg += f' ⭐ Все 5 слов! +{all_five_bonus} бонус'
+                msg += f' ⭐ Все 5! +{all_five_bonus}'
 
             return jsonify({
                 'status': 'correct',
@@ -300,32 +291,22 @@ def guess_word():
     bonus_list = level_data.get('bonus_words', [])
     if guess in bonus_list:
         if guess in bonus_words:
-            return jsonify({
-                'status': 'already',
-                'message': 'Это бонусное слово уже найдено!'
-            })
+            return jsonify({'status': 'already', 'message': 'Бонусное слово уже найдено!'})
 
         bonus_points = current_user.add_bonus_word(level_num, guess)
         db.session.commit()
 
-        new_bonus = current_user.get_bonus_words(level_num)
-        new_level_score = current_user.get_level_score(level_num)
-
         return jsonify({
             'status': 'bonus',
-            'message': f'🎁 Бонусное слово! +{bonus_points} очков',
+            'message': f'🎁 Бонусное слово! +{bonus_points}',
             'word': guess,
             'bonus_points': bonus_points,
-            'bonus_count': len(new_bonus),
-            'level_score': new_level_score,
+            'bonus_count': len(current_user.get_bonus_words(level_num)),
+            'level_score': current_user.get_level_score(level_num),
             'total_score': current_user.total_score
         })
 
-    # 3. Не найдено
-    return jsonify({
-        'status': 'wrong',
-        'message': 'Неправильно! Попробуйте ещё раз'
-    })
+    return jsonify({'status': 'wrong', 'message': 'Неправильно! Попробуйте ещё раз'})
 
 
 @app.route('/api/hint', methods=['POST'])
@@ -342,17 +323,19 @@ def get_hint():
     if not level_data or word_index >= len(level_data['words']):
         return jsonify({'status': 'error'})
 
-    penalty = current_user.use_hint(level_num, word_index)
+    # Стоимость подсказки зависит от уровня
+    hint_cost = level_data.get('hint_cost', 1)
+    penalty = current_user.use_hint(level_num, word_index, hint_cost)
     db.session.commit()
 
     hint = level_data['words'][word_index]['hint']
-    new_level_score = current_user.get_level_score(level_num)
 
     return jsonify({
         'status': 'ok',
         'hint': hint,
         'penalty': penalty,
-        'level_score': new_level_score,
+        'hint_cost': hint_cost,
+        'level_score': current_user.get_level_score(level_num),
         'total_score': current_user.total_score
     })
 
