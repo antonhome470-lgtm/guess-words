@@ -362,3 +362,20 @@ def next_level():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
+@app.route('/admin/stats')
+@login_required
+def admin_stats():
+    users = User.query.order_by(User.total_score.desc()).all()
+    stats = []
+    for u in users:
+        stats.append({
+            'username': u.username,
+            'level': u.current_level,
+            'score': u.total_score,
+            'finished': u.game_finished,
+            'words': u.total_words_guessed or 0,
+            'bonus': u.total_bonus_words or 0,
+            'hints': u.total_hints_used or 0
+        })
+    return jsonify(stats)
