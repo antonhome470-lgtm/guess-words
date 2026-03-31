@@ -11,13 +11,14 @@
     <div class="app-container">
         {% if current_user.is_authenticated %}
         <nav class="navbar">
-            <div class="nav-brand">🎮 Угадай Слова</div>
-            <div class="nav-right">
-                <span class="nav-user">👤 {{ current_user.username }}</span>
-                <span class="nav-score">⭐ {{ current_user.total_score }} очков</span>
-                <a href="{{ url_for('logout') }}" class="btn-logout">Выйти</a>
-            </div>
-        </nav>
+    <div class="nav-brand">🎮 Угадай Слова</div>
+    <div class="nav-right">
+        <a href="{{ url_for('stats_page') }}" class="nav-stats-link">🏆 Рейтинг</a>
+        <span class="nav-user">👤 {{ current_user.username }}</span>
+        <span class="nav-score">⭐ {{ current_user.total_score }} очков</span>
+        <a href="{{ url_for('logout') }}" class="btn-logout">Выйти</a>
+    </div>
+</nav>
         {% endif %}
 
         <main class="main-content">
