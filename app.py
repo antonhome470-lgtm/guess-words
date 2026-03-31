@@ -359,7 +359,13 @@ def next_level():
     db.session.commit()
     return jsonify({'status': 'next'})
 
-
+@app.route('/stats')
+@login_required
+def stats_page():
+    # Таблица лидеров
+    users = User.query.order_by(User.total_score.desc()).limit(50).all()
+    return render_template('stats.html', users=users)
+    
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
 
