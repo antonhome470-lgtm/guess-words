@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="stats-container">
+    <div class="stats-card">
+        <h1>🏆 Таблица лидеров</h1>
+
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Игрок</th>
+                    <th>Уровень</th>
+                    <th>Очки</th>
+                    <th>Слов</th>
+                    <th>Бонусов</th>
+                    <th>Подсказок</th>
+                    <th>Серия</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr class="{% if user.username == current_user.username %}current-player{% endif %}">
+                    <td>
+                        {% if loop.index == 1 %}🥇
+                        {% elif loop.index == 2 %}🥈
+                        {% elif loop.index == 3 %}🥉
+                        {% else %}{{ loop.index }}
+                        {% endif %}
+                    </td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.current_level }} / 10</td>
+                    <td class="score-cell">{{ user.total_score }}</td>
+                    <td>{{ user.total_words_guessed or 0 }}</td>
+                    <td>{{ user.total_bonus_words or 0 }}</td>
+                    <td>{{ user.total_hints_used or 0 }}</td>
+                    <td>🔥 {{ user.best_streak or 0 }}</td>
+                    <td>
+                        {% if user.game_finished %}
+                            ✅ Пройдено
+                        {% else %}
+                            🎮 Играет
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="stats-actions">
+            <a href="{{ url_for('game') }}" class="btn btn-primary">🎮 Вернуться в игру</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
