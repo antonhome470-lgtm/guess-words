@@ -940,3 +940,105 @@ body {
 .rule-danger strong {
     color: var(--danger);
 }
+
+/* ==================== STATS PAGE ==================== */
+.stats-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.stats-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 30px;
+}
+
+.stats-card h1 {
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 1.8rem;
+}
+
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.stats-table th {
+    background: var(--bg-input);
+    color: var(--text-muted);
+    padding: 12px 10px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.stats-table th:first-child {
+    border-radius: 10px 0 0 0;
+}
+
+.stats-table th:last-child {
+    border-radius: 0 10px 0 0;
+}
+
+.stats-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.stats-table tr:hover {
+    background: rgba(108, 92, 231, 0.1);
+}
+
+.current-player {
+    background: rgba(0, 206, 201, 0.1) !important;
+    border-left: 3px solid var(--secondary);
+}
+
+.current-player td {
+    font-weight: 700;
+}
+
+.score-cell {
+    color: var(--warning);
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+
+.stats-actions {
+    text-align: center;
+    margin-top: 25px;
+}
+
+/* Мобильная таблица */
+@media (max-width: 768px) {
+    .stats-table {
+        font-size: 0.75rem;
+    }
+
+    .stats-table th,
+    .stats-table td {
+        padding: 8px 5px;
+    }
+
+    .stats-card {
+        padding: 15px;
+        border-radius: 14px;
+    }
+}
+
+.nav-stats-link {
+    color: var(--warning);
+    text-decoration: none;
+    font-weight: 700;
+    transition: opacity 0.3s;
+}
+
+.nav-stats-link:hover {
+    opacity: 0.8;
+}
